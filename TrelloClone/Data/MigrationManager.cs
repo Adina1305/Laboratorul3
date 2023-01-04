@@ -6,30 +6,28 @@ using System;
 
 namespace TrelloClone.Data
 {
-    public static class MigrationManager
-    {
-        private static readonly ILogger _logger;
-
-        public static IHost MigrateDatabase(this IHost host)
-        {
-             using(var scope = host.Services.CreateScope())
-             {
-                 using(var appContext = scope.ServiceProvider
-                    .GetRequiredService<TrelloCloneDbContext>())
-                 {
-                    try
+     public static class MigrationManager
+     {
+          public static IHost MigrateDatabase(this IHost host)
+          {
+               using (var scope = host.Services.CreateScope())
+               {
+                    using (var appContext = scope.ServiceProvider
+                       .GetRequiredService<TrelloCloneDbContext>())
                     {
-                        appContext.Database.Migrate();
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogInformation($"{ex}");
-                        throw;
-                    }
-                 }
-             }
+                         try
+                         {
+                              appContext.Database.EnsureCreated();
+                              appContext.Database.Migrate();
+                         }
+                         catch
+                         {
 
-            return host;
-        }
-    }
+                         }
+                    }
+               }
+
+               return host;
+          }
+     }
 }
