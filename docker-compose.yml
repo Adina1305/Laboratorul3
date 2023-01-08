@@ -2,9 +2,7 @@ version: '3.5'
 
 services:
   app:
-    #image: adina2002/trello_clone:latest
-    build:
-     dockerfile: TrelloClone/Dockerfile
+    image: adina2002/trello_clone:latest
     container_name: app
     restart: always
     ports:
