@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,79 +13,82 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace TrelloClone
 {
-    public class Startup
-    {
-        private readonly IConfiguration _config;
+     public class Startup
+     {
+          private readonly IConfiguration _config;
 
-        public Startup(IConfiguration config)
-        {
-            _config = config;
-        }
+          public Startup(IConfiguration config)
+          {
+               _config = config;
+          }
 
-        public void ConfigureDevelopmentServices(IServiceCollection services)
-        {
-            services.AddDbContext<TrelloCloneDbContext>(x =>
-                x.UseSqlServer(_config.GetConnectionString("sqlConnString")));
+          public void ConfigureDevelopmentServices(IServiceCollection services)
+          {
+               services.AddDbContext<TrelloCloneDbContext>(x =>
+                   x.UseSqlServer(_config.GetConnectionString("sqlConnString")));
+               ConfigureServices(services);
+          }
 
-            ConfigureServices(services);
-        }
+          public void ConfigureProductionServices(IServiceCollection services)
+          {
+               services.AddDbContext<TrelloCloneDbContext>(x =>
+                   x.UseSqlServer(_config.GetConnectionString("sqlConnString")));
 
-        public void ConfigureProductionServices(IServiceCollection services)
-        {
-            services.AddDbContext<TrelloCloneDbContext>(x =>
-                x.UseSqlServer(_config.GetConnectionString("sqlConnString")));
+               ConfigureServices(services);
+          }
 
-            ConfigureServices(services);
-        }
+          public void ConfigureServices(IServiceCollection services)
+          {
+               services.AddControllersWithViews(options =>
+               {
+                    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+               }).AddNewtonsoftJson(opt =>
+               {
+                    opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+               });
 
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllersWithViews(options => {
-                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-            }).AddNewtonsoftJson(opt => {
-                opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-            });
+               services.AddScoped<BoardService>();
+               services.AddScoped<CardService>();
 
-            services.AddScoped<BoardService>();
-            services.AddScoped<CardService>();
+               services.AddIdentity<AppUser, IdentityRole<Guid>>()
+                   .AddEntityFrameworkStores<TrelloCloneDbContext>();
 
-            services.AddIdentity<AppUser, IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<TrelloCloneDbContext>();
+               services.ConfigureApplicationCookie(options =>
+               {
+                    options.LoginPath = "/User/Login";
+               });
 
-            services.ConfigureApplicationCookie(options => {
-                options.LoginPath = "/User/Login";
-            });
+               services.AddDbContext<TrelloCloneDbContext>();
+          }
 
-            services.AddDbContext<TrelloCloneDbContext>();
-        }
+          public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TrelloCloneDbContext context)
+          {
+               context.Database.Migrate();
+               if (env.IsDevelopment())
+               {
+                    app.UseDeveloperExceptionPage();
+               }
+               else
+               {
+                    app.UseExceptionHandler("/Error");
+                    app.UseHsts();
+               }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                app.UseHsts();
-            }
+               app.UseHttpsRedirection();
 
-            app.UseHttpsRedirection();
+               app.UseStaticFiles();
 
-            app.UseStaticFiles();
+               app.UseRouting();
 
-            app.UseRouting();
+               app.UseAuthorization();
+               app.UseAuthentication();
 
-            app.UseAuthorization();
-            app.UseAuthentication();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
-        }
-    }
+               app.UseEndpoints(endpoints =>
+               {
+                    endpoints.MapControllerRoute(
+                     name: "default",
+                     pattern: "{controller=Home}/{action=Index}/{id?}");
+               });
+          }
+     }
 }
