@@ -10,7 +10,6 @@ namespace TrelloClone
         {
             CreateHostBuilder(args)
                 .Build()
-                .MigrateDatabase()
                 .Run();
         }
 
